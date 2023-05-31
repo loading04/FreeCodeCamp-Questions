@@ -4,20 +4,24 @@ class Category:
         self.amount = 0
         self.total_expenses = 0
         self.available_money = 0
+        self.ledger2 = []
         self.ledger = []
 
     def deposit(self, amount, *args):
         self.amount += amount
         self.available_money += amount
-        amount = '{:.2f}'.format(self.amount)
+
         if len(args) > 0:
             description = args[0]
 
-            self.add_to_ledger(amount, description)
+            self.add_to_ledger('{:.2f}'.format(self.amount), description)
+
+            self.ledger.append({"amount": self.amount, "description": description})
             return {"amount": self.amount, "description": f"{description}"}
 
         else:
             self.add_to_ledger(amount)
+            self.ledger.append({"amount": self.amount, "description": ""})
             return {"amount": self.amount, "description": ""}
 
     def add_to_ledger(self, *args):
@@ -45,7 +49,7 @@ class Category:
         else:
             message = f"{description}{amount}"
 
-        self.ledger.append(message + "\n")
+        self.ledger2.append(message + "\n")
 
     def withdraw(self, amount, *args):
         if len(args) != 0:
@@ -58,7 +62,9 @@ class Category:
 
             self.available_money -= amount
             self.total_expenses += amount
-            self.add_to_ledger("-" + str(amount), description)
+            self.ledger.append({"amount": float("-" + str(amount)), "description": description})
+
+            self.add_to_ledger("-" + str('{:.2f}'.format(amount)), description)
             return True
 
         else:
@@ -96,13 +102,58 @@ class Category:
 
         ticket = f"{stars_begin * '*'}{self.name}{stars_end * '*'}""\n"
 
-        for item in self.ledger:
+        for item in self.ledger2:
             ticket += item
         available_money = '{:.2f}'.format(self.available_money)
         ticket += f"Total: {available_money}"
-        print(self.amount)
         return ticket
 
 
 def create_spend_chart(categories):
-    pass
+    cats = {}
+    list_cats = []
+    for cat in categories:
+        if cat.amount == 0:
+            cats[cat.name] = 0
+        else:
+            cats[cat.name] = round((cat.total_expenses * 100) / cat.amount)
+
+    s = "Percentage spent by category\n"
+
+    for i in range(10, -1, -1):
+        if i * 10 == 100:
+            s += str(i * 10) + "|"
+        elif i == 0:
+            s += "  0|"
+        else:
+            s += " " + str(i * 10) + "|"
+
+        for val in cats.values():
+            s += " "
+            if i * 10 <= val:
+                s += "o"
+            else:
+                s += " "
+            s += " "
+
+        s += "\n"
+
+    length = len(cats.values())
+    s += f"    {(length * 3 + 1) * '-'} \n"
+    i = 0
+
+    greatest_name_length = 0
+    for i in categories:
+        if len(i.name) > greatest_name_length:
+            greatest_name_length = len(i.name)
+
+    for i in range(greatest_name_length):
+        s += "    "
+        for c in categories:
+            if i < len(c.name):
+                s += " " + c.name[i] + " "
+            else:
+                s += "   "
+        s += " \n"
+
+    return s
